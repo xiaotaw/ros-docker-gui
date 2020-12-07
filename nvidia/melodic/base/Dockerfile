@@ -28,9 +28,12 @@ gdb valgrind && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install cmake 3.15.5
-RUN git clone https://gitlab.kitware.com/cmake/cmake.git && \
-cd cmake && git checkout tags/v3.15.5 && ./bootstrap --parallel=8 && make -j8 && make install && \
-cd .. && rm -rf cmake
+#RUN git clone https://gitlab.kitware.com/cmake/cmake.git && \
+#cd cmake && git checkout tags/v3.15.5 && ./bootstrap --parallel=8 && make -j8 && make install && \
+#cd .. && rm -rf cmake
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5.tar.gz && \
+tar zxf cmake-3.15.5.tar.gz && cd cmake-3.15.5 && ./bootstrap --parallel=8 && make -j8 && make install && \
+cd .. && rm -rf cmake-3.15.5
 
 RUN apt-get update && apt-get install -y automake autoconf pkg-config libevent-dev libncurses5-dev bison && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -53,8 +56,9 @@ ENV LC_ALL en_US.UTF-8
 
 # Install OhMyZSH
 RUN apt-get update && apt-get install -y zsh && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
+#RUN wget --no-check-certificate https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
 #RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh
+RUN curl --socks5-hostname localhost:1089 -fsSL http://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | zsh || true
 RUN chsh -s /usr/bin/zsh root
 RUN git clone https://github.com/sindresorhus/pure /root/.oh-my-zsh/custom/pure
 RUN ln -s /root/.oh-my-zsh/custom/pure/pure.zsh-theme /root/.oh-my-zsh/custom/
@@ -68,7 +72,8 @@ COPY assets/terminator_config /root/.config/terminator/config
 COPY assets/terminator_background.png /root/.config/terminator/background.png
 
 # Install ROS
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN sh -c 'echo "deb http://mirrors.ustc.edu.cn/ros/ubuntu/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 RUN apt-get update && apt-get install -y --allow-downgrades --allow-remove-essential --allow-change-held-packages \
 libpcap-dev \
@@ -78,16 +83,21 @@ ros-melodic-socketcan-bridge \
 ros-melodic-geodesy && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
 
+
 # Configure ROS
-RUN rosdep init && rosdep update 
+RUN echo "199.232.96.133 raw.githubusercontent.com" >> /etc/hosts &&  rosdep init && rosdep update  
 RUN echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc
 RUN echo "export ROSLAUNCH_SSH_UNKNOWN=1" >> /root/.bashrc
 RUN echo "source /opt/ros/melodic/setup.zsh" >> /root/.zshrc
 RUN echo "export ROSLAUNCH_SSH_UNKNOWN=1" >> /root/.zshrc
 
+RUN apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" update 
+
 # Entry script - This will also run terminator
 COPY assets/entrypoint_setup.sh /
 ENTRYPOINT ["/entrypoint_setup.sh"]
+
+EXPOSE 1089
 
 # ---
 CMD ["terminator"]

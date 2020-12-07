@@ -27,15 +27,21 @@ gdb valgrind && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install cmake 3.15.5
-RUN git clone https://gitlab.kitware.com/cmake/cmake.git && \
-cd cmake && git checkout tags/v3.15.5 && ./bootstrap --parallel=8 && make -j8 && make install && \
-cd .. && rm -rf cmake
+#RUN git clone https://gitlab.kitware.com/cmake/cmake.git && \
+#cd cmake && git checkout tags/v3.15.5 && ./bootstrap --parallel=8 && make -j8 && make install && \
+#cd .. && rm -rf cmake
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5.tar.gz && \
+tar zxf cmake-3.15.5.tar.gz && cd cmake-3.15.5 && ./bootstrap --parallel=8 && make -j8 && make install && \
+cd .. && rm -rf cmake-3.15.5
 
 # Install tmux 3.1
 RUN apt-get update && apt-get install -y automake autoconf pkg-config libevent-dev libncurses5-dev bison && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
+
 RUN git clone https://github.com/tmux/tmux.git && \
 cd tmux && git checkout tags/3.1 && ls -la && sh autogen.sh && ./configure && make -j8 && make install
+#RUN wget https://github.com/tmux/tmux/releases/download/3.1/tmux-3.1.tar.gz && \
+#tar zxf tmux-3.1.tar.gz && cd tmux-3.1 && ls -la && sh autogen.sh && ./configure && make -j8 && make install
 
 # Install new paramiko (solves ssh issues)
 RUN apt-add-repository universe
@@ -71,7 +77,8 @@ COPY assets/terminator_config /root/.config/terminator/config
 COPY assets/terminator_background.png /root/.config/terminator/background.png
 
 # Install ROS
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN sh -c 'echo "deb http://mirrors.ustc.edu.cn/ros/ubuntu/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 RUN apt-get update && apt-get install -y --allow-downgrades --allow-remove-essential --allow-change-held-packages \
 libpcap-dev \
@@ -82,15 +89,19 @@ ros-kinetic-geodesy && \
 apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Configure ROS
-RUN rosdep init && rosdep update 
+RUN echo "199.232.96.133 raw.githubusercontent.com" >> /etc/hosts && rosdep init && rosdep update 
 RUN echo "source /opt/ros/kinetic/setup.bash" >> /root/.bashrc
 RUN echo "export ROSLAUNCH_SSH_UNKNOWN=1" >> /root/.bashrc
 RUN echo "source /opt/ros/kinetic/setup.zsh" >> /root/.zshrc
 RUN echo "export ROSLAUNCH_SSH_UNKNOWN=1" >> /root/.zshrc
 
+RUN apt-get -o Acquire::https::proxy="socks5h://127.0.0.1:1089/" update
+
 # Entry script - This will also run terminator
 COPY assets/entrypoint_setup.sh /
 ENTRYPOINT ["/entrypoint_setup.sh"]
+
+EXPOSE 1089
 
 # ---
 CMD ["terminator"]

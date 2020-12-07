@@ -7,7 +7,8 @@ LABEL Description="ROS-Kinetic-Desktop with CUDA 10 support (Ubuntu 14.04)" Vend
 ENV DEBIAN_FRONTEND noninteractive 
 
 # CUDA Base-packages
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates apt-transport-https gnupg-curl && \
+RUN apt-get update &&  \
+    apt-get install -y --no-install-recommends ca-certificates apt-transport-https gnupg-curl && \
     rm -rf /var/lib/apt/lists/* && \
     NVIDIA_GPGKEY_SUM=d1be581509378368edeec8c1eb2958702feedf3bc3d17011adbf24efacce4ab5 && \
     NVIDIA_GPGKEY_FPR=ae09fe4bbd223a84b2ccfce3f60f4b3d7fa2af80 && \
@@ -23,7 +24,11 @@ ENV CUDA_PKG_VERSION 10-0=$CUDA_VERSION-1
 LABEL com.turlucode.ros.cuda="${CUDA_VERSION}"
 
 ## For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN echo "152.195.19.142  developer.download.nvidia.com" >> /etc/hosts && \
+    rm /etc/apt/sources.list.d/ros-latest.list && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F60F4B3D7FA2AF80 && \
+    apt-get -o Acquire::https::proxy="socks5h://127.0.0.1:1089/" update && \
+    apt-get -o Acquire::https::proxy="socks5h://127.0.0.1:1089/" install -y --no-install-recommends \
         cuda-cudart-$CUDA_PKG_VERSION \
         cuda-compat-10-0 && \
     ln -s cuda-10.0 /usr/local/cuda && \
@@ -43,7 +48,8 @@ ENV NVIDIA_REQUIRE_CUDA "cuda>=10.0 brand=tesla,driver>=384,driver<385 brand=tes
 ENV NCCL_VERSION 2.4.2
 LABEL com.turlucode.ros.nccl="${NCCL_VERSION}"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::https::proxy="socks5h://127.0.0.1:1089/" update && \
+    apt-get -o Acquire::https::proxy="socks5h://127.0.0.1:1089/" install -y --no-install-recommends \
         cuda-libraries-$CUDA_PKG_VERSION \
         cuda-nvtx-$CUDA_PKG_VERSION \
         libnccl2=$NCCL_VERSION-1+cuda10.0 && \
@@ -52,7 +58,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 
 # CUDA Devel-packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" update && \
+    apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" install -y --no-install-recommends \
         cuda-libraries-dev-$CUDA_PKG_VERSION \
         cuda-nvml-dev-$CUDA_PKG_VERSION \
         cuda-minimal-build-$CUDA_PKG_VERSION \
@@ -62,6 +69,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs
 
+EXPOSE 1089
 
 # Launch terminator
 CMD ["terminator"]

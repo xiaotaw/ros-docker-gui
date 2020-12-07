@@ -10,17 +10,21 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV CUDNN_VERSION 7.6.0.64
 LABEL com.turlucode.ros.cudnn="${CUDNN_VERSION}"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" update && \
+    apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" install -y --no-install-recommends \
             libcudnn7=$CUDNN_VERSION-1+cuda10.0 && \
     apt-mark hold libcudnn7 && \
     rm -rf /var/lib/apt/lists/*
 
 ## CUDNN Devel-packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" update && \
+    apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:1089/" install -y --no-install-recommends \
             libcudnn7=$CUDNN_VERSION-1+cuda10.0 \
             libcudnn7-dev=$CUDNN_VERSION-1+cuda10.0 && \
     apt-mark hold libcudnn7 && \
     rm -rf /var/lib/apt/lists/*
+
+EXPOSE 1089
 
 # Launch terminator
 CMD ["terminator"]

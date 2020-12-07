@@ -32,5 +32,7 @@ rm -rf /opencv && rm -rf /opencv_contrib
 
 RUN sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf.d/opencv.conf' && ldconfig
 
+EXPOSE 1089
+
 # Launch terminator
 CMD ["terminator"]

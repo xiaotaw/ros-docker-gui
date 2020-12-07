@@ -11,7 +11,8 @@ RUN echo "deb https://developer.download.nvidia.com/compute/machine-learning/rep
 ENV CUDNN_VERSION 6.0.21
 LABEL com.turlucode.ros.cudnn="${CUDNN_VERSION}"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F60F4B3D7FA2AF80 && \
+    apt-get update && apt-get install -y --no-install-recommends \
             libcudnn6=$CUDNN_VERSION-1+cuda8.0 \
             libcudnn6-dev=$CUDNN_VERSION-1+cuda8.0 && \
     rm -rf /var/lib/apt/lists/*

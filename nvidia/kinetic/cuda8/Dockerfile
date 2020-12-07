@@ -20,6 +20,7 @@ ENV CUDA_PKG_VERSION 8-0=$CUDA_VERSION-1
 LABEL com.turlucode.ros.cuda="${CUDA_VERSION}"
 
 ## CUDA Runtime-packages
+#RUN apt-get update && apt-get -o Acquire::https::proxy="socks5h://127.0.0.1:1089/" install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cuda-nvrtc-$CUDA_PKG_VERSION \
         cuda-nvgraph-$CUDA_PKG_VERSION \
@@ -56,6 +57,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         cuda-cudart-dev-$CUDA_PKG_VERSION \
         cuda-driver-dev-$CUDA_PKG_VERSION && \
     rm -rf /var/lib/apt/lists/*
+
+EXPOSE 1089
 
 # Launch terminator
 CMD ["terminator"]
